@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Dime — Money for Gen Z</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#0C0C14;--surface:#13131E;--card:#1A1A28;--border:#252538;
+    --purple:#7C5CFC;--purple-light:#A88BFD;--purple-dim:#1E1535;
+    --green:#0FBA81;--green-dim:#0A2E1F;
+    --coral:#F2545B;--coral-dim:#2E1015;
+    --amber:#F5A623;--amber-dim:#2E1F05;
+    --blue:#3B9EFF;--blue-dim:#0A1F3D;
+    --text:#EEEEFF;--muted:#6B6B90;--muted-light:#9090B8;
+  }
+  html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);overflow:hidden}
+  #app{max-width:390px;margin:0 auto;height:100vh;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+  #screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  #screen::-webkit-scrollbar{display:none}
+
+  /* NAV */
+  nav{background:var(--surface);border-top:1px solid var(--border);display:flex;padding:10px 0 max(16px,env(safe-area-inset-bottom));flex-shrink:0}
+  nav button{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0}
+  nav button .ico{font-size:20px;line-height:1}
+  nav button .lbl{font-size:10px;font-weight:500;letter-spacing:.3px;color:var(--muted);transition:color .15s}
+  nav button.active .lbl{color:var(--purple-light)}
+  nav button .dot{width:4px;height:4px;border-radius:50%;background:var(--purple);opacity:0;transition:opacity .15s}
+  nav button.active .dot{opacity:1}
+
+  /* SHARED */
+  .section{padding:20px 0 24px;animation:fadeUp .2s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .px{padding-left:20px;padding-right:20px}
+  .card{background:var(--card);border-radius:16px;border:1px solid var(--border)}
+  .row{display:flex;align-items:center}
+  .pill{border-radius:99px;padding:4px 12px;font-size:12px;font-weight:600}
+  .screen-title{font-size:20px;font-weight:800;margin-bottom:16px}
+  .sec-label{font-size:13px;font-weight:700;margin:16px 0 10px}
+  .txn-row{display:flex;align-items:center;padding:11px 20px;border-bottom:1px solid #25253820}
+  .txn-ico{width:40px;height:40px;border-radius:12px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:19px;margin-right:12px;border:1px solid var(--border);flex-shrink:0}
+  .txn-name{font-size:14px;font-weight:600;color:var(--text)}
+  .txn-sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .txn-amt{font-size:14px;font-weight:700;margin-left:auto;white-space:nowrap}
+
+  /* TOGGLE */
+  .toggle-wrap{display:flex;background:var(--card);border-radius:12px;padding:4px;border:1px solid var(--border);margin-bottom:16px}
+  .toggle-btn{flex:1;padding:7px 0;border-radius:9px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:transparent;color:var(--muted);transition:all .15s}
+  .toggle-btn.active{background:var(--purple);color:var(--text);font-weight:700}
+
+  /* STAT CARDS */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .stat-card{background:var(--card);border-radius:14px;padding:14px 12px;border:1px solid var(--border)}
+  .stat-emoji{font-size:20px}
+  .stat-label{font-size:11px;color:var(--muted);margin:8px 0 2px}
+  .stat-val{font-size:15px;font-weight:800}
+  .stat-sub{font-size:10px;color:var(--muted);margin-top:2px}
+
+  /* GOAL CARD */
+  .goal-card{background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--border);margin-bottom:14px}
+  .goal-ring-wrap{position:relative;width:72px;height:72px;flex-shrink:0}
+  .goal-ring-emoji{position:absolute;top:0;left:0;width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .prog-bar{background:var(--border);border-radius:99px;height:5px;margin-top:12px}
+  .prog-fill{height:5px;border-radius:99px;transition:width .4s ease}
+
+  /* BUDGET CARD */
+  .budget-card{background:var(--card);border-radius:16px;padding:14px 16px;border:1px solid var(--border);margin-bottom:12px}
+  .budget-bar{background:var(--border);border-radius:99px;height:5px;margin-top:10px}
+  .budget-fill{height:5px;border-radius:99px}
+
+  /* TIP CARD */
+  .tip-card{background:var(--purple-dim);border-radius:14px;border:1px solid #7C5CFC40;padding:14px 16px;margin-bottom:16px}
+  .tip-title{font-size:13px;font-weight:700;color:var(--purple-light);margin-bottom:4px}
+  .tip-body{font-size:12px;color:var(--muted-light);line-height:1.65}
+
+  /* BALANCE CARD */
+  .balance-card{background:linear-gradient(135deg,#1E1535,#0E0A22);border:1px solid #7C5CFC40;border-radius:20px;padding:22px 20px;margin:0 20px 14px}
+  .balance-caption{font-size:12px;color:var(--purple-light);letter-spacing:.8px;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+  .balance-amount{font-size:34px;font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+  .balance-meta{display:flex;gap:24px}
+  .balance-meta-item p{margin:0}
+  .balance-meta-item .lbl{font-size:11px;color:var(--muted)}
+  .balance-meta-item .val{font-size:14px;font-weight:700;margin-top:2px}
+
+  .mini-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 20px 14px}
+  .mini-stat{background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--border)}
+
+  svg text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+
+  .new-goal-btn{background:var(--purple-dim);border:1px solid #7C5CFC50;color:var(--purple-light);border-radius:10px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600}
+
+  /* chart container */
+  .chart-wrap{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px 0 8px}
+  .chart-title{font-size:13px;font-weight:700;color:var(--text);padding:0 16px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen"></div>
+  <nav>
+    <button class="active" data-tab="home" onclick="switchTab('home',this)">
+      <span class="ico">🏠</span><span class="lbl">Home</span><span class="dot"></span>
+    </button>
+    <button data-tab="expenses" onclick="switchTab('expenses',this)">
+      <span class="ico">📊</span><span class="lbl">Expenses</span><span class="dot"></span>
+    </button>
+    <button data-tab="budget" onclick="switchTab('budget',this)">
+      <span class="ico">🎯</span><span class="lbl">Budget</span><span class="dot"></span>
+    </button>
+    <button data-tab="goals" onclick="switchTab('goals',this)">
+      <span class="ico">⭐</span><span class="lbl">Goals</span><span class="dot"></span>
+    </button>
+    <button data-tab="insights" onclick="switchTab('insights',this)">
+      <span class="ico">✨</span><span class="lbl">Insights</span><span class="dot"></span>
+    </button>
+  </nav>
+</div>
+
+<script>
+const D = {
+  txns:[
+    {name:"Zara",cat:"Shopping",amt:-48.99,ico:"🛍️",date:"Today"},
+    {name:"Salary",cat:"Income",amt:2400,ico:"💸",date:"Today"},
+    {name:"Spotify",cat:"Entertainment",amt:-9.99,ico:"🎵",date:"Yesterday"},
+    {name:"Starbucks",cat:"Food & Drink",amt:-6.75,ico:"☕",date:"Yesterday"},
+    {name:"Uber",cat:"Transport",amt:-12.40,ico:"🚗",date:"Mon"},
+    {name:"Netflix",cat:"Entertainment",amt:-15.99,ico:"📺",date:"Mon"},
+    {name:"Whole Foods",cat:"Groceries",amt:-67.30,ico:"🛒",date:"Sun"},
+    {name:"Freelance",cat:"Income",amt:350,ico:"💻",date:"Sun"},
+  ],
+  week:[{d:"Mon",v:42},{d:"Tue",v:18},{d:"Wed",v:95},{d:"Thu",v:31},{d:"Fri",v:78},{d:"Sat",v:120},{d:"Sun",v:67}],
+  months:[{m:"Jan",v:1840},{m:"Feb",v:2100},{m:"Mar",v:1690},{m:"Apr",v:2340},{m:"May",v:1980},{m:"Jun",v:2210}],
+  cats:[
+    {name:"Food",pct:34,color:"#F5A623"},
+    {name:"Shopping",pct:22,color:"#7C5CFC"},
+    {name:"Entertainment",pct:18,color:"#F2545B"},
+    {name:"Transport",pct:15,color:"#3B9EFF"},
+    {name:"Groceries",pct:11,color:"#0FBA81"},
+  ],
+  budgets:[
+    {cat:"Food & Drink",ico:"🍜",budget:400,spent:287,color:"#F5A623"},
+    {cat:"Shopping",ico:"🛍️",budget:300,spent:291,color:"#F2545B"},
+    {cat:"Transport",ico:"🚗",budget:150,spent:88,color:"#3B9EFF"},
+    {cat:"Entertainment",ico:"🎮",budget:100,spent:42,color:"#7C5CFC"},
+    {cat:"Groceries",ico:"🛒",budget:250,spent:180,color:"#0FBA81"},
+  ],
+  goals:[
+    {name:"Tokyo Trip ✈️",target:3000,saved:1240,color:"#7C5CFC",emoji:"🗾",dl:"Aug 2025"},
+    {name:"New MacBook 💻",target:1800,saved:1620,color:"#0FBA81",emoji:"💻",dl:"Mar 2025"},
+    {name:"Emergency Fund",target:5000,saved:2100,color:"#3B9EFF",emoji:"🛡️",dl:"Dec 2025"},
+    {name:"Festival Season 🎪",target:600,saved:380,color:"#F5A623",emoji:"🎪",dl:"Jun 2025"},
+  ]
+};
+
+/* ── SVG HELPERS ── */
+function barChart(data,keyD,keyV,W,H,accent,highlight){
+  const pad={t:8,r:8,b:24,l:28};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const max=Math.max(...data.map(d=>d[keyV]));
+  const bw=Math.max(8, Math.floor(cw/data.length)-6);
+  let bars='', labels='';
+  data.forEach((d,i)=>{
+    const bh=Math.max(4, (d[keyV]/max)*ch);
+    const x=pad.l + i*(cw/data.length) + (cw/data.length-bw)/2;
+    const y=pad.t+ch-bh;
+    const fill=highlight&&i===highlight?'#F2545B':accent;
+    const op=highlight&&i!==highlight?'0.55':'1';
+    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="5" fill="${fill}" opacity="${op}"/>`;
+    labels+=`<text x="${x+bw/2}" y="${pad.t+ch+16}" text-anchor="middle" fill="#6B6B90" font-size="10">${d[keyD]}</text>`;
+  });
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${bars}${labels}</svg>`;
+}
+
+function areaChart(data,keyV,W,H,color){
+  const pad={t:8,r:8,b:24,l:30};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const max=Math.max(...data.map(d=>d[keyV]));
+  const min=Math.min(...data.map(d=>d[keyV]))*0.85;
+  const pts=data.map((d,i)=>{
+    const x=pad.l+(i/(data.length-1))*cw;
+    const y=pad.t+ch-((d[keyV]-min)/(max-min))*ch;
+    return {x,y,d};
+  });
+  const path=pts.map((p,i)=>i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`).join(' ');
+  const area=path+` L${pts[pts.length-1].x},${pad.t+ch} L${pts[0].x},${pad.t+ch} Z`;
+  const last3=data.slice(-3);
+  const keyDLabel=Object.keys(data[0]).find(k=>k!==keyV);
+  const lbl3=pts.slice(-3).map((p,i)=>`<text x="${p.x}" y="${pad.t+ch+16}" text-anchor="middle" fill="#6B6B90" font-size="10">${data[pts.length-3+i][keyDLabel]}</text>`).join('');
+  const fst3=pts.slice(0,3).map((p,i)=>`<text x="${p.x}" y="${pad.t+ch+16}" text-anchor="middle" fill="#6B6B90" font-size="10">${data[i][keyDLabel]}</text>`).join('');
+  const mid=pts[Math.floor(pts.length/2)];
+  const midLbl=`<text x="${mid.x}" y="${pad.t+ch+16}" text-anchor="middle" fill="#6B6B90" font-size="10">${data[Math.floor(pts.length/2)][keyDLabel]}</text>`;
+  const id='g'+Math.random().toString(36).slice(2);
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity=".3"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#${id})"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${color}"/>`).join('')}
+    ${fst3}${midLbl}${lbl3}
+  </svg>`;
+}
+
+function donut(cats,W){
+  const cx=W/2,cy=W/2,R=W/2-8,ri=W/2-24;
+  let angle=-Math.PI/2, paths='';
+  cats.forEach(c=>{
+    const a=(c.pct/100)*2*Math.PI;
+    const x1=cx+R*Math.cos(angle), y1=cy+R*Math.sin(angle);
+    const x2=cx+R*Math.cos(angle+a), y2=cy+R*Math.sin(angle+a);
+    const xi1=cx+ri*Math.cos(angle), yi1=cy+ri*Math.sin(angle);
+    const xi2=cx+ri*Math.cos(angle+a), yi2=cy+ri*Math.sin(angle+a);
+    const lf=a>Math.PI?1:0;
+    paths+=`<path d="M${xi1},${yi1} L${x1},${y1} A${R},${R} 0 ${lf},1 ${x2},${y2} L${xi2},${yi2} A${ri},${ri} 0 ${lf},0 ${xi1},${yi1} Z" fill="${c.color}" stroke="#0C0C14" stroke-width="2"/>`;
+    angle+=a;
+  });
+  return `<svg width="${W}" height="${W}" viewBox="0 0 ${W} ${W}">${paths}</svg>`;
+}
+
+function ring(pct,size,color,stroke){
+  const r=(size-stroke)/2, circ=2*Math.PI*r;
+  const dash=(pct/100)*circ;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#252538" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/* ── SCREENS ── */
+function homeHTML(){
+  const txnRows=D.txns.slice(0,4).map(t=>`
+    <div class="txn-row">
+      <div class="txn-ico">${t.ico}</div>
+      <div>
+        <div class="txn-name">${t.name}</div>
+        <div class="txn-sub">${t.cat} · ${t.date}</div>
+      </div>
+      <div class="txn-amt" style="color:${t.amt>0?'var(--green)':'var(--text)'}">
+        ${t.amt>0?'+':''}₹${Math.abs(t.amt).toFixed(2)}
+      </div>
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="row px" style="justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:13px;color:var(--muted)">Good morning 👋</div>
+        <div style="font-size:17px;font-weight:700;margin-top:2px">Aarav</div>
+      </div>
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--purple-dim);display:flex;align-items:center;justify-content:center;font-size:20px">🧑‍💻</div>
+    </div>
+
+    <div class="balance-card">
+      <div class="balance-caption">Total Balance</div>
+      <div class="balance-amount">₹8,420.50</div>
+      <div class="balance-meta">
+        <div class="balance-meta-item">
+          <p class="lbl">Income this month</p>
+          <p class="val" style="color:var(--green)">+₹2,750</p>
+        </div>
+        <div class="balance-meta-item">
+          <p class="lbl">Spent this month</p>
+          <p class="val" style="color:var(--coral)">-₹1,340</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mini-stat-grid">
+      <div class="mini-stat">
+        <div style="font-size:22px">🏦</div>
+        <div style="font-size:11px;color:var(--muted);margin:8px 0 2px">Saved</div>
+        <div style="font-size:17px;font-weight:800;color:var(--green)">₹1,240</div>
+      </div>
+      <div class="mini-stat">
+        <div style="font-size:22px">📈</div>
+        <div style="font-size:11px;color:var(--muted);margin:8px 0 2px">To invest</div>
+        <div style="font-size:17px;font-weight:800;color:var(--blue)">₹500</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap px" style="margin:0 20px 16px;padding:14px 4px 8px">
+      <div style="font-size:12px;color:var(--muted);padding:0 12px;margin-bottom:6px">This week's spending</div>
+      ${areaChart(D.week,'v',340,90,'#7C5CFC')}
+    </div>
+
+    <div class="px sec-label">Recent activity</div>
+    ${txnRows}
+  </div>`;
+}
+
+function expensesHTML(view='week'){
+  const txnRows=D.txns.map(t=>`
+    <div class="txn-row">
+      <div class="txn-ico">${t.ico}</div>
+      <div>
+        <div class="txn-name">${t.name}</div>
+        <div class="txn-sub">${t.cat} · ${t.date}</div>
+      </div>
+      <div class="txn-amt" style="color:${t.amt>0?'var(--green)':'var(--text)'}">
+        ${t.amt>0?'+':''}₹${Math.abs(t.amt).toFixed(2)}
+      </div>
+    </div>`).join('');
+
+  const chart=view==='week'
+    ? barChart(D.week,'d','v',340,150,'#7C5CFC',5)
+    : barChart(D.months,'m','v',340,150,'#A88BFD');
+
+  const catLegend=D.cats.map(c=>`
+    <div class="row" style="gap:8px;margin-bottom:6px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></div>
+      <div style="flex:1;font-size:12px;color:var(--muted-light)">${c.name}</div>
+      <div style="font-size:12px;font-weight:700">${c.pct}%</div>
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="px screen-title">Expenses</div>
+    <div class="px toggle-wrap">
+      <button class="toggle-btn ${view==='week'?'active':''}" onclick="renderExpenses('week')">This week</button>
+      <button class="toggle-btn ${view==='month'?'active':''}" onclick="renderExpenses('month')">6 months</button>
+    </div>
+    <div class="chart-wrap" style="margin:0 20px 16px;padding:14px 4px 8px">
+      ${chart}
+    </div>
+    <div class="row px" style="gap:16px;margin-bottom:16px;align-items:flex-start">
+      <div style="flex-shrink:0">${donut(D.cats,110)}</div>
+      <div style="flex:1">${catLegend}</div>
+    </div>
+    <div class="px sec-label">All transactions</div>
+    ${txnRows}
+  </div>`;
+}
+
+function budgetHTML(){
+  const totalSpent=D.budgets.reduce((s,b)=>s+b.spent,0);
+  const totalBudget=D.budgets.reduce((s,b)=>s+b.budget,0);
+  const totalPct=Math.round((totalSpent/totalBudget)*100);
+
+  const cards=D.budgets.map(b=>{
+    const pct=Math.round((b.spent/b.budget)*100);
+    const over=pct>95;
+    return `
+    <div class="budget-card" style="border-color:${over?b.color+'50':'var(--border)'}">
+      <div class="row" style="margin-bottom:10px">
+        <span style="font-size:20px;margin-right:10px">${b.ico}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${b.cat}</div>
+          <div style="font-size:11px;color:var(--muted)">₹${b.spent} of ₹${b.budget}</div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:${over?'var(--coral)':'var(--text)'}">${pct}%</span>
+      </div>
+      <div class="budget-bar">
+        <div class="budget-fill" style="width:${Math.min(pct,100)}%;background:${over?'var(--coral)':b.color}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="section">
+    <div class="row px" style="justify-content:space-between;margin-bottom:16px;align-items:center">
+      <div class="screen-title" style="margin-bottom:0">Budget</div>
+      <span class="pill" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">May 2025</span>
+    </div>
+    <div style="margin:0 20px 16px;background:linear-gradient(135deg,var(--green-dim),#081A12);border:1px solid #0FBA8130;border-radius:16px;padding:16px">
+      <div style="font-size:12px;color:var(--green);font-weight:600;margin-bottom:4px">Total monthly budget</div>
+      <div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:12px">
+        <div style="font-size:28px;font-weight:800">₹${totalBudget.toLocaleString()}</div>
+        <div style="font-size:13px;color:var(--muted)">₹${totalSpent} spent</div>
+      </div>
+      <div style="background:var(--border);border-radius:99px;height:6px">
+        <div style="background:var(--green);height:6px;border-radius:99px;width:${totalPct}%"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">${totalPct}% used · ${100-totalPct}% remaining</div>
+    </div>
+    <div class="px sec-label">Categories</div>
+    <div class="px">${cards}</div>
+  </div>`;
+}
+
+function goalsHTML(){
+  const cards=D.goals.map(g=>{
+    const pct=Math.round((g.saved/g.target)*100);
+    return `
+    <div class="goal-card">
+      <div class="row" style="gap:14px;align-items:center">
+        <div class="goal-ring-wrap">
+          ${ring(pct,72,g.color,6)}
+          <div class="goal-ring-emoji">${g.emoji}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;margin-bottom:2px">${g.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Due ${g.dl}</div>
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <div style="font-size:11px;color:var(--muted)">Saved</div>
+              <div style="font-size:15px;font-weight:800;color:${g.color}">₹${g.saved.toLocaleString()}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:var(--muted)">Goal</div>
+              <div style="font-size:15px;font-weight:700;color:var(--muted-light)">₹${g.target.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${g.color}"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">${pct}% of goal reached</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="section">
+    <div class="row px" style="justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="screen-title" style="margin-bottom:0">Savings Goals</div>
+      <button class="new-goal-btn">+ New goal</button>
+    </div>
+    <div class="px">${cards}</div>
+  </div>`;
+}
+
+function insightsHTML(){
+  const stats=[
+    {label:"Biggest day",val:"Saturday",sub:"₹120 spent",ico:"📅",color:"var(--coral)"},
+    {label:"Saved vs last month",val:"+₹340",sub:"You're crushing it",ico:"📈",color:"var(--green)"},
+    {label:"Top category",val:"Food",sub:"34% of spend",ico:"🍜",color:"var(--amber)"},
+    {label:"Subscriptions",val:"₹89.97",sub:"4 active /mo",ico:"📱",color:"var(--purple)"},
+  ];
+  const statCards=stats.map(s=>`
+    <div class="stat-card">
+      <div class="stat-emoji">${s.ico}</div>
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-val" style="color:${s.color}">${s.val}</div>
+      <div class="stat-sub">${s.sub}</div>
+    </div>`).join('');
+
+  return `<div class="section">
+    <div class="px screen-title">Insights ✨</div>
+    <div class="stat-grid px">${statCards}</div>
+
+    <div class="chart-wrap" style="margin:0 20px 14px;padding:14px 4px 8px">
+      <div class="chart-title">Monthly spending trend</div>
+      ${areaChart(D.months,'v',340,130,'#7C5CFC')}
+    </div>
+
+    <div class="chart-wrap" style="margin:0 20px 14px;padding:14px 4px 8px">
+      <div class="chart-title">Weekly breakdown</div>
+      ${barChart(D.week,'d','v',340,120,'#7C5CFC',5)}
+      <div style="font-size:11px;color:var(--muted);text-align:center;padding:6px 0 0">🔴 Saturday was your biggest spending day</div>
+    </div>
+
+    <div class="tip-card px" style="margin:0 20px">
+      <div class="tip-title">💡 Dime tip</div>
+      <div class="tip-body">You spend 43% more on weekends. Try the "weekend wallet" trick — set a fixed amount on Fridays and stop when it's gone. Small limits, big saves.</div>
+    </div>
+  </div>`;
+}
+
+/* ── ROUTING ── */
+let currentExpView='week';
+
+function renderExpenses(v){
+  currentExpView=v;
+  document.getElementById('screen').innerHTML=expensesHTML(v);
+}
+
+function switchTab(tab, btn){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const s=document.getElementById('screen');
+  s.scrollTop=0;
+  if(tab==='home') s.innerHTML=homeHTML();
+  else if(tab==='expenses') s.innerHTML=expensesHTML(currentExpView);
+  else if(tab==='budget') s.innerHTML=budgetHTML();
+  else if(tab==='goals') s.innerHTML=goalsHTML();
+  else if(tab==='insights') s.innerHTML=insightsHTML();
+}
+
+document.getElementById('screen').innerHTML=homeHTML();
+</script>
+</body>
+</html>
